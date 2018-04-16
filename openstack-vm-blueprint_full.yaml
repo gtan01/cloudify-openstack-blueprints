@@ -1,0 +1,74 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/2.2.0/plugin.yaml
+
+inputs:
+  server_name:
+    type: string
+    default: server
+
+  server_image:
+    type: string
+    default: { get_secret: centos_core_image }
+
+  server_flavor:
+    type: string
+    default: { get_secret: small_image_flavor  }
+
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    username: { get_secret: keystone_username }
+    password: { get_secret: keystone_password }
+    tenant_name: { get_secret: keystone_tenant_name }
+    auth_url: { get_secret: keystone_url }
+    region: { get_secret: region }
+
+node_templates:
+
+  server_host:
+    type:  cloudify.openstack.nodes.Server
+    properties:
+      resource_id:  { get_input: server_name }
+      openstack_config: *openstack_config
+      image: { get_input: server_image }
+      flavor:  { get_input: server_flavor }
+      management_network_name:  { get_secret: private_network_name }
+      cloudify_agent:
+        user: centos
+    relationships:
+      - target: security_group
+        type: cloudify.openstack.server_connected_to_security_group
+      - target: keypair
+        type: cloudify.openstack.server_connected_to_keypair
+      - target: floating_ip
+        type: cloudify.openstack.server_connected_to_floating_ip
+
+
+## Infrastructure node_templates
+###
+
+  lab_keypair:
+    type: cloudify.openstack.nodes.KeyPair
+    properties:
+      private_key_path: { get_secret: agent_key_private }
+      use_external_resource: True
+      resource_id: lab_keypair
+      openstack_config: *openstack_config
+
+  floating_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_secret: external_network_name }
+
+  security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: True
+      resource_id: "AllOpen"
