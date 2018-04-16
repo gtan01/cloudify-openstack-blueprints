@@ -55,8 +55,6 @@ node_templates:
     type: cloudify.openstack.nodes.KeyPair
     properties:
       private_key_path: { get_secret: agent_key_private }
-      use_external_resource: True
-      resource_id: lab_keypair
       openstack_config: *openstack_config
 
   floating_ip:
