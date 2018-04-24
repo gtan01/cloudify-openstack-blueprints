@@ -4,6 +4,7 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - plugin:cloudify-openstack-plugin
 
+
 inputs:
   server_name:
     type: string
