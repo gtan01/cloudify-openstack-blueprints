@@ -3,40 +3,95 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - plugin:cloudify-openstack-plugin
+  - plugin:cloudify-utilities-plugin
+  - imports/cloud-config.yaml
 
 
 inputs:
+  keystone_username:
+    description: OpenStack identity service username
+    type: string
+    default: { get_secret: keystone_username }
+
+  keystone_user_domain_name:
+    description: OpenStack user domain name
+    type: string
+    default: { get_secret: keystone_user_domain_name }
+
+  keystone_password:
+    description: OpenStack identity service password
+    type: string
+    default: { get_secret: keystone_password }
+
+  keystone_project_name:
+    description: OpenStack project name
+    type: string
+    default: { get_secret: keystone_project_name }
+
+  keystone_project_domain_name:
+    description: OpenStack project doain name
+    type: string
+    default: { get_secret: keystone_project_domain_name }
+
+  keystone_url:
+    description: Keystone authentication URL
+    type: string
+    default: { get_secret: keystone_url }
+
+  region:
+    description: OpenStack region
+    type: string
+    default: { get_secret: region }
+
   server_name:
     type: string
-    default: server
+    default: playbox
 
-  server_image:
+  image:
     type: string
     default: { get_secret: centos_core_image }
 
-  server_flavor:
+  flavor:
     type: string
     default: { get_secret: small_image_flavor  }
 
+  agent_user:
+    description: >
+      User for connecting to agent VMs
+    default: centos
 
 dsl_definitions:
 
   openstack_config: &openstack_config
     username: { get_secret: keystone_username }
-    password: { get_secret: keystone_password }
-    tenant_name: { get_secret: keystone_tenant_name }
-    auth_url: { get_secret: keystone_url }
-    region: { get_secret: region }
+    user_domain_name: { get_input: keystone_user_domain_name }
+    password: { get_input: keystone_password }
+    project_name: { get_input: keystone_project_name }
+    project_domain_name: { get_input: keystone_project_domain_name }
+    auth_url: { get_input: keystone_url }
+    region: { get_input: region }
 
 node_templates:
 
   server_host:
     type:  cloudify.openstack.nodes.Server
     properties:
-      resource_id:  { get_input: server_name }
       openstack_config: *openstack_config
+      resource_id:  { get_input: server_name }
       image: { get_input: server_image }
       flavor:  { get_input: server_flavor }
       management_network_name:  { get_secret: private_network_name }
       agent_config:
-        install_method: none
+        user: { get_input: agent_user }
+        install_method: remote
+        port: 22
+        key: { get_secret: agent_key_private }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config

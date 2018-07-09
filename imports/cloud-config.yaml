@@ -1,0 +1,15 @@
+node_templates:
+
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        # bootcmd:
+        # - "mkdir -p /tmp/alok"
+        users:
+          - name: { get_input: agent_user }
+            # primary-group: wheel
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh_authorized_keys:
+              - { get_secret: agent_key_public }
