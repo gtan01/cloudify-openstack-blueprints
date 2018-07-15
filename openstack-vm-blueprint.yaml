@@ -1,35 +1,16 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
+
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - plugin:cloudify-openstack-plugin
   - plugin:cloudify-utilities-plugin
+
   - imports/cloud-config.yaml
-  - imports/openstack_inputs.yaml
 
+  - inputs/openstack_inputs.yaml
+  - inputs/inputs.yaml
 
-inputs:
-
-  server_name:
-    type: string
-    default: playbox
-
-  image:
-    type: string
-    default: { get_secret: centos_core_image }
-
-  flavor:
-    type: string
-    default: { get_secret: small_image_flavor  }
-
-  private_network_name:
-    type: string
-    default: { get_secret: private_network_name }
-
-  agent_user:
-    description: >
-      User for connecting to agent VMs
-    default: centos
 
 dsl_definitions:
 
