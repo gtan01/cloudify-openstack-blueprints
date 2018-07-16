@@ -34,10 +34,7 @@ node_templates:
       flavor:  { get_input: flavor }
       management_network_name:  { get_input: private_network_name }
       agent_config:
-        user: { get_input: agent_user }
-        install_method: remote
-        port: 22
-        key: { get_secret: agent_key_private }
+        install_method: none
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
