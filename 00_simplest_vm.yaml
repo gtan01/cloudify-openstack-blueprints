@@ -29,7 +29,7 @@ dsl_definitions:
 
 node_templates:
 
-  server_host:
+  host:
     type:  cloudify.openstack.nodes.Server
     properties:
       openstack_config: *openstack_config
@@ -37,8 +37,12 @@ node_templates:
       image: { get_secret: centos_core_image }
       flavor:  { get_secret: small_image_flavor }
       server:
-        default:
-          key_name: { get_secret: key_name }
+        key_name: { get_secret: key_name }
       management_network_name:  { get_input: private_network_name }
       agent_config:
         install_method: none
+
+outputs:
+
+  ip:
+    value: { get_attribute: [ host, ip ] }
