@@ -25,14 +25,13 @@ dsl_definitions:
 
 node_templates:
 
-  server_host:
+  host:
     type:  cloudify.openstack.nodes.Server
     properties:
       openstack_config: *openstack_config
       resource_id:  { get_input: server_name }
       image: { get_input: image }
       flavor:  { get_input: flavor }
-      management_network_name:  { get_input: private_network_name }
       agent_config:
         install_method: none
     interfaces:
@@ -40,7 +39,75 @@ node_templates:
         create:
           inputs:
             args:
-              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+              userdata: { get_attribute: [ host_cloud_config, cloud_config ] }
     relationships:
+      - target: port
+        type: cloudify.openstack.server_connected_to_port
+      - target: host_cloud_config
+        type: cloudify.relationships.depends_on
+
+  #-----------------------------------------------------------------------------
+
+  port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: public_network
       - type: cloudify.relationships.depends_on
-        target: cloudify_host_cloud_config
+        target: public_subnet
+      - type: cloudify.openstack.port_connected_to_security_group
+        target: security_group
+
+  #-----------------------------------------------------------------------------
+
+  security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_input: security_group_name }
+
+  #-----------------------------------------------------------------------------
+
+  public_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_input: public_subnet_name }
+    relationships:
+      - target: public_network
+        type: cloudify.relationships.contained_in
+      - target: router
+        type: cloudify.openstack.subnet_connected_to_router
+
+  public_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_input: public_network_name }
+
+  router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_input: router_name }
+    relationships:
+      - target: external_network
+        type: cloudify.relationships.connected_to
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: external_network_name }
+
+outputs:
+
+  private_ip:
+    value: { get_attribute: [ port, fixed_ip_address ] }
