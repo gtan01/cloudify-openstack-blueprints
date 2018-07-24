@@ -34,8 +34,11 @@ node_templates:
     properties:
       openstack_config: *openstack_config
       resource_id:  { get_input: server_name }
-      image: { get_secret: image }
-      flavor:  { get_secret: flavor }
+      image: { get_secret: centos_core_image }
+      flavor:  { get_secret: small_image_flavor }
+      server:
+        default:
+          key_name: { get_secret: key_name }
       management_network_name:  { get_input: private_network_name }
       agent_config:
         install_method: none
