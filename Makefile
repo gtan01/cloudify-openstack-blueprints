@@ -8,7 +8,7 @@
 	cfy install 02_vm_with_private_ip_with_agent.yaml -b playbox
 
 03_vm_with_floating_ip:
-	cfy install 0303_vm_with_floating_ip.yaml -b playbox
+	cfy install 03_vm_with_floating_ip.yaml -b playbox
 
 uninstall:
 	cfy uninstall playbox
